@@ -1,0 +1,18 @@
+[project]
+name = "reviewer-agent"
+version = "1.0.0"
+requires-python = ">=3.13"
+dependencies = [
+    "strands-agents[otel]==1.62.0",
+    "mcp==1.30.0",
+    "bedrock-agentcore[a2a]==1.25.2",
+    "a2a-sdk[all]==0.3.26",
+    "boto3==1.43.122",
+    "structlog==26.1.0",
+    "httpx==0.28.1",
+    "fastapi==0.162.0",
+    "uvicorn==0.54.0",
+    # Pinned upstream commit includes the OpenTelemetry 1.45.1 security fixes
+    # pending the next aws-opentelemetry-distro release.
+    "aws-opentelemetry-distro @ https://github.com/aws-observability/aws-otel-python-instrumentation/archive/f2a266ec1cc0d2db2e045c8fe0d288f1cdd4cd2b.zip#sha256=790a4bb0c33dd727b9a8b904aaa6b44d79b6f996caf5988600b5246bfb764b53&subdirectory=aws-opentelemetry-distro",
+]

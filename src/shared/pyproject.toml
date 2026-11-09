@@ -1,0 +1,27 @@
+[project]
+name = "agentcore-s3files-shared"
+version = "1.0.0"
+description = "Shared modules (A2A client, Bedrock model loader, logging) for the agents and MCP servers."
+requires-python = ">=3.13"
+# Base deps needed by ALL consumers (agents + MCP servers): logging + AWS + HTTP.
+dependencies = [
+    "boto3==1.43.122",
+    "httpx==0.28.1",
+    "structlog==25.5.0",
+]
+
+# The agents also use bedrock_model.py (Strands BedrockModel). MCP servers do not,
+# so they install plain `shared` and avoid pulling in Strands.
+[project.optional-dependencies]
+agent = [
+    "strands-agents==1.62.0",
+    "mcp==1.30.0",
+]
+
+[build-system]
+requires = ["setuptools==80.9.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["shared"]
+package-dir = { shared = "." }

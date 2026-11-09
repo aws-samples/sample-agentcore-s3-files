@@ -1,0 +1,8 @@
+# Client-side dependencies for the helper scripts (start_review.py -> src/shared/a2a_client.py).
+# These are only needed to RUN the scripts locally; the agent/MCP images declare their own
+# deps in src/**/pyproject.toml.
+#
+# Install with:   pip install -r scripts/requirements.txt
+# Or just run:    uv run scripts/start_review.py ...   (uv reads the PEP 723 header instead)
+boto3==1.43.122
+httpx==0.28.1

@@ -1,0 +1,18 @@
+[project]
+name = "workspace-mcp"
+version = "1.0.0"
+requires-python = ">=3.13"
+# mcp floor raised to 1.30.0 to resolve CVE-2026-116684/116685/116686 and
+# CVE-2026-59951 (all fixed in 1.30.0). Previously pinned to 1.28.1 because a
+# newer 1.x broke the AgentCore Gateway target sync (ping loop); 1.30.0 must be
+# re-validated against the gateway on deploy.
+dependencies = [
+    "mcp==1.30.0",
+    "boto3==1.43.122",
+    "botocore==1.43.122",
+    "structlog==25.5.0",
+    "bedrock-agentcore==1.25.2",
+    # Pinned upstream commit includes the OpenTelemetry 1.45.1 security fixes
+    # pending the next aws-opentelemetry-distro release.
+    "aws-opentelemetry-distro @ https://github.com/aws-observability/aws-otel-python-instrumentation/archive/f2a266ec1cc0d2db2e045c8fe0d288f1cdd4cd2b.zip#sha256=790a4bb0c33dd727b9a8b904aaa6b44d79b6f996caf5988600b5246bfb764b53&subdirectory=aws-opentelemetry-distro",
+]

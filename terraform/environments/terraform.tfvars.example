@@ -1,0 +1,13 @@
+# Example Terraform variables — copy into an environment folder and edit:
+#   cp environments/terraform.tfvars.example environments/dev/terraform.tfvars
+#   terraform plan -var-file=environments/dev/terraform.tfvars -out=tfplan
+#
+# Region + naming only. The AWS ACCOUNT comes from your credentials
+# (export AWS_PROFILE=my-account) — do NOT put an account id here.
+#
+# `environment` must match a folder under environments/ that contains a
+# config.yaml (e.g. environments/dev/config.yaml).
+project_name = "agentcore-s3files"
+environment  = "dev"          # -> environments/dev/config.yaml
+aws_region   = "ap-southeast-1"
+# log_level  = "INFO"          # optional; falls back to config.yaml

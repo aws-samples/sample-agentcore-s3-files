@@ -1,0 +1,87 @@
+# =============================================================================
+# Development environment configuration
+# Loaded by the root main.tf via yamldecode(file(...)).
+# =============================================================================
+
+# Application log level: DEBUG | INFO | WARNING | ERROR
+log_level: "INFO"
+
+vpc:
+  # true  = create a brand-new VPC via the ./modules/vpc module
+  # false = use an existing VPC (fill in id + private_subnet_ids below)
+  create_vpc: true
+
+  # ---- Used when create_vpc: false (existing VPC) ----
+  id: ""
+  private_subnet_ids: []
+
+  # ---- Used when create_vpc: true (new VPC via module) ----
+  cidr_block: "10.0.0.0/16"
+  enable_dns_hostnames: true
+  enable_dns_support: true
+  availability_zone_count: 2
+  availability_zone_names: ["ap-southeast-1a", "ap-southeast-1b"]
+  enable_nat_gateway: true
+  flow_log_retention_days: 365
+
+# S3 Files shared storage.
+# NOTE: Workspace data uses dedicated SSE-KMS keys in both Regions. S3 access-log
+# buckets remain on SSE-S3 because S3 log delivery does not support SSE-KMS.
+s3files:
+  workspace_prefix: "agentcore/workspaces/"
+  retention_days: 30
+  mount_path: "/mnt"
+
+# AgentCore runtimes — agents have no mount and use the MCP servers to access
+# the shared filesystem. Build each image from its component Dockerfile.
+agentcore:
+  # ---- Two-phase deploy gate (because ECR images must exist first) ----
+  # The runtimes reference container images in ECR. Those images do not exist
+  # until scripts/build_and_push.sh has run, so runtime creation is gated on a
+  # plan-time flag:
+  #   Phase 1  create_runtimes: false  -> VPC + ECR + S3 Files + bucket + IAM
+  #                                       (then build & push images)
+  #   Phase 2  create_runtimes: true   -> the MCP server + agent runtimes
+  # This gate is about ECR images, NOT S3 Files. S3 Files is always created and
+  # its apply-time access point ARNs are resolved within a single apply.
+  create_runtimes: true
+  # NOTE: Set to true after Phase 1 (VPC + ECR + S3 Files) and build_and_push.sh
+
+  # Bedrock model the agents use (injected as BEDROCK_MODEL_ID).
+  model_id: "global.anthropic.claude-sonnet-4-5-20250929-v1:0"
+
+  # Runtime images default to their derived ECR repos (built by scripts/build_and_push.sh):
+  #   <project>-<env>-<key>-mcp  for mcp_servers,  <project>-<env>-<key>-agent for agents.
+  # Tag appended to each derived image:
+  # Security-review build: input validation, least-privilege roles, pinned build
+  # inputs, and the OpenTelemetry/MCP security fixes.
+  image_tag: "security-review-20261030-i03"
+
+  # MCP servers — mount the shared S3 Files filesystem, speak MCP.
+  # container_uri is OPTIONAL — set it only to override the derived ECR image.
+  mcp_servers:
+    workspace:
+      description: "Workspace MCP — reviews/ + plans/ artifacts on shared storage"
+    gitlab:
+      description: "GitLab MCP — read-only clone (S3 Files) + fetch MR/diff + comment/inline (no push)"
+
+  # Agents — A2A, NO S3 mount. Reach storage via MCP; analyzer hands off to
+  # reviewer directly via A2A (true agent-to-agent, no orchestrator).
+  agents:
+    analyzer:
+      description: "Agent 1 — combined technical + security review; writes reviews/analysis.md (never comments on GitLab)"
+    reviewer:
+      description: "Agent 2 — ranks findings, writes plans/final_plan.md, posts the GitLab comment"
+
+  # Runtime session lifecycle (seconds).
+  idle_runtime_session_timeout: 900 # reclaim idle session after 15 min
+  max_lifetime: 28800 # hard cap 8 h
+  runtime_log_retention_days: 365
+
+# Secrets Manager — let this stack create the GitLab token secret.
+secrets:
+  # The GitLab token secret (<project>-<env>-gitlab-token) is ALWAYS created and
+  # initially created with an empty value. Set a real token with TF_VAR_gitlab_token
+  # during the first deployment, or replace it later by:
+  #   editing the secret value in the AWS console (not overwritten on re-apply).
+  recovery_window_in_days: 0 # 0 = delete immediately on destroy (handy for dev)
